@@ -123,8 +123,12 @@ def score_debt(metrics: dict[str, float]) -> dict[str, float]:
     """独自式でファイル別スコアを算出"""
     score = _score_formula(metrics)
     breakdown = {
-        "mi_normalized": min(max((100.0 - metrics.get("mi", 0.0)) / 100.0, 0.0), 1.0),
-        "cc_normalized": min(max((metrics.get("branches", 0.0) - 10.0) / 40.0, 0.0), 1.0),
+        "mi_normalized": min(
+            max((100.0 - metrics.get("mi", 0.0)) / 100.0, 0.0), 1.0
+        ),
+        "cc_normalized": min(
+            max((metrics.get("branches", 0.0) - 10.0) / 40.0, 0.0), 1.0
+        ),
         "dup_normalized": min(max(metrics.get("dup_rate", 0.0), 0.0), 1.0),
         "td_normalized": min(max(metrics.get("td_ratio", 0.0), 0.0), 1.0),
     }
@@ -132,12 +136,18 @@ def score_debt(metrics: dict[str, float]) -> dict[str, float]:
         "score": score,
         "breakdown": breakdown,
         "weights": {"mi": 0.35, "cc": 0.25, "dup": 0.20, "td": 0.20},
-        "severity": "low" if score < 3.0 else "medium" if score < 7.0 else "high",
+        "severity": "low"
+        if score < 3.0
+        else "medium"
+        if score < 7.0
+        else "high",
     }
 
 
 @mcp.tool()
-def generate_tests(target: str, framework: str = "pytest") -> dict[str, str]:
+def generate_tests(
+    target: str, framework: str = "pytest"
+) -> dict[str, str]:
     """テスト雛形を生成し補完指示を付与"""
     if framework == "pytest":
         test_template = f'''#!/usr/bin/env python3
@@ -251,7 +261,7 @@ if __name__ == "__main__":
         "instructions": f"""
         ## Test Implementation Instructions
         
-        1. **Import Statements**: Uncomment and update import statements for your target module
+        1. **Import Statements**: Uncomment and update import statements
         2. **Test Cases**: Replace placeholder assertions with actual test logic
         3. **Fixtures**: Update setup_method/setUp with necessary test data
         4. **Edge Cases**: Add tests for boundary conditions and error scenarios
@@ -269,7 +279,8 @@ if __name__ == "__main__":
             "Save the template to test_{target.lower()}.py",
             "Add proper imports for your module",
             "Implement actual test logic",
-            "Run with: " + ("pytest" if framework == "pytest" else "python -m unittest"),
+            "Run with: "
+            + ("pytest" if framework == "pytest" else "python -m unittest"),
         ],
     }
 
@@ -297,50 +308,60 @@ def summarize(repo_path: str) -> dict[str, any]:
             code = _read_code(file_path)
             metrics = _basic_metrics(code)
             metrics["score"] = _score_formula(metrics)
-            
+
             relative_path = str(file_path.relative_to(repo))
             file_analysis.append({
                 "path": relative_path,
                 "metrics": metrics,
             })
-            
+
             total_loc += metrics["loc"]
-            
+
             # Identify hotspots (high complexity or large files)
             if metrics["score"] > 5.0 or metrics["loc"] > 200:
                 hotspots.append({
                     "path": relative_path,
                     "score": metrics["score"],
                     "loc": metrics["loc"],
-                    "reason": "High debt score" if metrics["score"] > 5.0 else "Large file size"
+                    "reason": (
+                        "High debt score"
+                        if metrics["score"] > 5.0
+                        else "Large file size"
+                    ),
                 })
-            
+
             # Identify complexity issues
             if metrics["branches"] > 20 or metrics["funcs"] > 15:
                 complexity_issues.append({
                     "path": relative_path,
                     "branches": metrics["branches"],
                     "functions": metrics["funcs"],
-                    "avg_args": metrics["avg_args"]
+                    "avg_args": metrics["avg_args"],
                 })
-                
+
         except Exception as e:
             file_analysis.append({
                 "path": str(file_path.relative_to(repo)),
-                "error": str(e)
+                "error": str(e),
             })
 
     # Sort by debt score
     hotspots.sort(key=lambda x: x["score"], reverse=True)
-    
+
     # Generate recommendations
     recommendations = []
     if hotspots:
-        recommendations.append(f"Focus on {len(hotspots)} hotspot files with highest debt scores")
+        recommendations.append(
+            f"Focus on {len(hotspots)} hotspot files with highest debt scores"
+        )
     if complexity_issues:
-        recommendations.append(f"Consider refactoring {len(complexity_issues)} files with high complexity")
+        recommendations.append(
+            f"Consider refactoring {len(complexity_issues)} files with high complexity"
+        )
     if total_loc > 1000:
-        recommendations.append("Large codebase detected - consider modularization")
+        recommendations.append(
+            "Large codebase detected - consider modularization"
+        )
 
     return {
         "repository": repo_path,
