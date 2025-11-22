@@ -37,7 +37,7 @@ def _read_resource(resource_path: str, version: str = "latest") -> str:
         content = resource_file.read_text(encoding="utf-8")
         # Add version metadata
         if content and not content.startswith("# Version:"):
-            content = f"# Version: latest\n# Updated: {Path(resource_file).stat().st_mtime}\n\n{content}"
+            content = f"# Version: latest\n# Updated: {int(resource_file.stat().st_mtime)}\n\n{content}"
         return content
     return f"Resource not found: {resource_path} (version: {version})"
 
@@ -49,65 +49,20 @@ def _semantic_analysis(code: str) -> dict[str, any]:
     except SyntaxError:
         return {"errors": ["Syntax error in code"]}
 
+    return _analyze_ast_nodes(tree)
+
+
+def _analyze_ast_nodes(tree: ast.AST) -> dict[str, any]:
+    """ASTノードを解析して問題を検出"""
     issues = []
     smells = []
     patterns = []
 
     for node in ast.walk(tree):
-        # Long function detection
-        if isinstance(node, ast.FunctionDef):
-            func_lines = node.end_lineno - node.lineno + 1 if hasattr(node, 'end_lineno') else 0
-            if func_lines > 50:
-                issues.append({
-                    "type": "long_function",
-                    "name": node.name,
-                    "line": node.lineno,
-                    "length": func_lines,
-                    "severity": "medium"
-                })
-
-            # Too many parameters
-            if len(node.args.args) > 7:
-                issues.append({
-                    "type": "too_many_params",
-                    "name": node.name,
-                    "line": node.lineno,
-                    "param_count": len(node.args.args),
-                    "severity": "high"
-                })
-
-            # Complex nested logic
-            nested_count = _count_nested_loops(node)
-            if nested_count > 3:
-                smells.append({
-                    "type": "deep_nesting",
-                    "name": node.name,
-                    "line": node.lineno,
-                    "nesting_level": nested_count,
-                    "severity": "high"
-                })
-
-        # Class analysis
-        elif isinstance(node, ast.ClassDef):
-            methods = [n for n in node.body if isinstance(n, ast.FunctionDef)]
-            if len(methods) > 20:
-                issues.append({
-                    "type": "large_class",
-                    "name": node.name,
-                    "line": node.lineno,
-                    "method_count": len(methods),
-                    "severity": "medium"
-                })
-
-        # Import analysis
-        elif isinstance(node, ast.Import) or isinstance(node, ast.ImportFrom):
-            if isinstance(node, ast.ImportFrom) and node.module and node.module.startswith('.'):
-                patterns.append({
-                    "type": "relative_import",
-                    "line": node.lineno,
-                    "module": node.module,
-                    "note": "Consider absolute imports"
-                })
+        issues.extend(_analyze_function(node))
+        issues.extend(_analyze_class(node))
+        patterns.extend(_analyze_imports(node))
+        smells.extend(_analyze_complexity(node))
 
     return {
         "issues": issues,
@@ -119,6 +74,92 @@ def _semantic_analysis(code: str) -> dict[str, any]:
             "total_patterns": len(patterns)
         }
     }
+
+
+def _analyze_function(node: ast.AST) -> list[dict[str, any]]:
+    """関数ノードを解析"""
+    issues = []
+    if not isinstance(node, ast.FunctionDef):
+        return issues
+
+    func_lines = (
+        node.end_lineno - node.lineno + 1
+        if hasattr(node, "end_lineno")
+        else 0
+    )
+    
+    if func_lines > 50:
+        issues.append({
+            "type": "long_function",
+            "name": node.name,
+            "line": node.lineno,
+            "length": func_lines,
+            "severity": "medium"
+        })
+
+    if len(node.args.args) > 7:
+        issues.append({
+            "type": "too_many_params",
+            "name": node.name,
+            "line": node.lineno,
+            "param_count": len(node.args.args),
+            "severity": "high"
+        })
+
+    return issues
+
+
+def _analyze_class(node: ast.AST) -> list[dict[str, any]]:
+    """クラスノードを解析"""
+    issues = []
+    if not isinstance(node, ast.ClassDef):
+        return issues
+
+    methods = [
+        n for n in node.body
+        if isinstance(n, ast.FunctionDef)
+    ]
+    
+    if len(methods) > 20:
+        issues.append({
+            "type": "large_class",
+            "name": node.name,
+            "line": node.lineno,
+            "method_count": len(methods),
+            "severity": "medium"
+        })
+
+    return issues
+
+
+def _analyze_imports(node: ast.AST) -> list[dict[str, any]]:
+    """インポートノードを解析"""
+    patterns = []
+    if isinstance(node, ast.ImportFrom):
+        if node.module and node.module.startswith("."):
+            patterns.append({
+                "type": "relative_import",
+                "line": node.lineno,
+                "module": node.module,
+                "note": "Consider absolute imports"
+            })
+    return patterns
+
+
+def _analyze_complexity(node: ast.AST) -> list[dict[str, any]]:
+    """複雑さを解析"""
+    smells = []
+    if isinstance(node, ast.FunctionDef):
+        nested_count = _count_nested_loops(node)
+        if nested_count > 3:
+            smells.append({
+                "type": "deep_nesting",
+                "name": node.name,
+                "line": node.lineno,
+                "nesting_level": nested_count,
+                "severity": "high"
+            })
+    return smells
 
 
 def _count_nested_loops(node: ast.AST, depth: int = 0) -> int:
@@ -168,7 +209,9 @@ def _validate_template(template_content: str) -> dict[str, any]:
         "issues": issues,
         "variables": list(set(variables)),
         "length": len(template_content),
-        "sections": len(re.findall(r"^#+", template_content, re.MULTILINE))
+        "sections": len(
+            re.findall(r"^#+", template_content, re.MULTILINE)
+        )
     }
 
 
@@ -618,7 +661,12 @@ class Test{target.title()}:
             f"Save the template to test_{target.lower()}.py",
             "Add proper imports for your module",
             "Implement actual test logic",
-            f"Run with: {framework_specific_instructions.get(framework, {}).get('commands', {}).get('run', f'python test_{target.lower()}.py')}",
+            (
+                "Run with: "
+                + framework_specific_instructions.get(framework, {})
+                .get("commands", {})
+                .get("run", f"python test_{target.lower()}.py")
+            ),
         ],
     }
 
