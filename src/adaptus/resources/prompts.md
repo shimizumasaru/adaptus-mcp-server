@@ -1,146 +1,266 @@
-# Core Prompt Templates
+# コアプロンプトテンプレート集
 
-## Debt Analysis Template
+## 技術的負債分析テンプレート
 
-### Context
-You are analyzing Python code for technical debt and maintainability issues. Focus on identifying code smells, complexity issues, and areas that need refactoring.
+### 前提条件
 
-### Analysis Framework
+あなたはPythonコードの技術的負債と保守性問題を分析する役割を担っています。コードの臭い、複雑性の問題、およびリファクタリングが必要な箇所の特定に重点を置いてください。
 
-#### 1. Maintainability Assessment
-- **Code Complexity**: Identify functions with high cyclomatic complexity
-- **Code Length**: Flag overly long functions and classes
-- **Parameter Count**: Watch for functions with too many parameters
-- **Nesting Depth**: Identify deeply nested code blocks
+### 分析フレームワーク
 
-#### 2. Design Pattern Evaluation
-- **Single Responsibility**: Check if classes/functions have one clear purpose
-- **DRY Violations**: Look for code duplication
-- **Cohesion**: Assess how well-related code is grouped together
-- **Coupling**: Evaluate dependencies between components
+#### 1. 保守性評価
 
-#### 3. Code Quality Indicators
-- **Naming**: Are variable/function/class names descriptive?
-- **Comments**: Is there appropriate documentation?
-- **Error Handling**: Are exceptions handled properly?
-- **Testing**: Is the code testable and well-tested?
+- **コード複雑度**: 循環的複雑度が高い関数を特定する
+- **コード長**: 過度に長い関数やクラスを指摘する
+- **パラメータ数**: パラメータ数が多過ぎる関数に注意する
+- **ネスト深度**: 深く入れ子になったコードブロックを特定する
 
-### Sequential Reasoning Steps
+#### 2. 設計パターン評価
 
-1. **Initial Assessment**: Scan the code structure and identify obvious issues
-2. **Detailed Analysis**: Examine each function/class for specific problems
-3. **Pattern Recognition**: Identify recurring anti-patterns
-4. **Impact Evaluation**: Assess the severity and priority of each issue
-5. **Recommendation Formulation**: Provide specific, actionable improvements
+- **単一責任原則**: クラスや関数が明確な単一の責務を持っているか確認する
+- **DRY原則違反**: コードの重複箇所を検出する
+- **結合度**: 関連するコードが適切にグループ化されているかを評価する
+- **結合度**: コンポーネント間の依存関係を評価する
 
-### Output Format
+#### 3. コード品質指標
 
-```
-## Technical Debt Analysis
+- **命名規則**: 変数/関数/クラス名は適切に記述されているか
+- **コメント**: 適切なドキュメントが整備されているか
+- **エラー処理**: 例外処理が適切に行われているか
+- **テスト可能性**: コードがテスト可能であり、十分なテストが実施されているか
 
-### High Priority Issues
-1. **[Issue Type]**: [Specific location]
-   - **Problem**: [Description]
-   - **Impact**: [Why it matters]
-   - **Recommendation**: [How to fix]
+### 段階的な分析手順
 
-### Medium Priority Issues
-[Similar format]
+1. **初期評価**: コード構造を概観し、明らかな問題点を特定する
+2. **詳細分析**: 各関数/クラスについて具体的な問題点を検証する
+3. **パターン認識**: 繰り返し現れるアンチパターンを特定する
+4. **影響度評価**: 各問題点の深刻度と優先度を評価する
+5. **改善提案の策定**: 具体的で実行可能な改善策を提示する
 
-### Low Priority Issues
-[Similar format]
-
-### Overall Assessment
-- **Debt Score**: [0-10 scale]
-- **Key Areas**: [Main problem areas]
-- **Quick Wins**: [Easy improvements]
-```
-
-## Design Refactor Template
-
-### Context
-You are providing design improvement suggestions for Python code. Focus on architectural patterns, domain separation, and responsibility redistribution.
-
-### Design Principles
-
-#### 1. Domain-Driven Design
-- **Bounded Contexts**: Identify clear domain boundaries
-- **Ubiquitous Language**: Use consistent terminology
-- **Domain Entities**: Model core business concepts
-- **Value Objects**: Create immutable concept representations
-
-#### 2. Clean Architecture
-- **Dependency Rule**: Dependencies point inward
-- **Layer Separation**: Distinct presentation, business, and data layers
-- **Use Cases**: Application-specific business rules
-- **Interface Segregation**: Small, focused interfaces
-
-#### 3. SOLID Principles Application
-- **Single Responsibility**: One reason to change
-- **Open/Closed**: Open for extension, closed for modification
-- **Liskov Substitution**: Subtypes must be substitutable
-- **Interface Segregation**: Client-specific interfaces
-- **Dependency Inversion**: Depend on abstractions
-
-### Refactoring Strategy
-
-#### Phase 1: Structure Analysis
-1. Identify current responsibilities
-2. Map dependencies and coupling
-3. Spot violation of design principles
-4. Document current architecture issues
-
-#### Phase 2: Domain Separation
-1. Extract core business logic
-2. Separate infrastructure concerns
-3. Isolate presentation layer
-4. Define clear interfaces
-
-#### Phase 3: Responsibility Redistribution
-1. Move methods to appropriate classes
-2. Extract cohesive modules
-3. Implement design patterns
-4. Create abstraction layers
-
-### Output Format
+### 出力形式
 
 ```
-## Design Refactoring Plan
+## 技術的負債分析レポート
 
-### Current Issues
-1. **[Architecture Problem]**: [Location]
-   - **Violation**: [Design principle broken]
-   - **Consequences**: [Negative impact]
+### 最優先対応事項
+1. **[問題種別]**: [具体的な発生箇所]
+   - **問題点**: [具体的な内容]
+   - **影響度**: [なぜ重要なのか]
+   - **改善提案**: [具体的な修正方法]
 
-### Proposed Structure
+### 中優先度事項
+[同様の形式で記載]
+
+### 低優先度事項
+[同様の形式で記載]
+
+### 総合評価
+- **負債スコア**: [0～10段階評価]
+- **主要課題領域**: [主な問題箇所]
+- **即効性のある改善項目**: [簡単に実施可能な改善策]
+```
+
+## 設計リファクタリング提案テンプレート
+
+### 背景
+
+Pythonコードの設計改善に関する提案を行う。アーキテクチャパターン、ドメイン分離、および責任分担の再設計に焦点を当てる。
+
+### 設計原則
+
+#### 1. ドメイン駆動設計
+
+- **境界づけられたコンテキスト**: 明確なドメイン境界を定義する
+- **ユビキタス言語**: 一貫した用語体系を使用する
+- **ドメインエンティティ**: 中核となるビジネス概念をモデル化する
+- **バリューオブジェクト**: 不変の概念表現を作成する
+
+#### 2. クリーンアーキテクチャ
+
+- **依存関係ルール**: 依存関係は内側向きに配置する
+- **レイヤー分離**: 明確な表示層・ビジネスロジック層・データ層を分離する
+- **ユースケース**: アプリケーション固有のビジネスルールを定義する
+- **インターフェース分離**: 目的に特化した小さなインターフェースを設計する
+
+#### 3. SOLID原則の適用
+
+- **単一責任原則**: 変更理由を1つに限定する
+- **開放/閉鎖原則**: 拡張には開放的、修正には閉鎖的である
+- **リスコフ置換原則**: サブタイプは置換可能でなければならない
+- **インターフェース分離原則**: クライアントごとに特化されたインターフェースを設計する
+- **依存関係逆転の原則**: 抽象化に依存する設計とする
+
+### リファクタリング戦略
+
+#### 第1フェーズ：構造分析
+
+1. 現在の責任範囲を特定する
+2. 依存関係と結合度を可視化する
+3. 設計原則違反箇所を洗い出す
+4. 現行アーキテクチャの問題点を文書化する
+
+#### 第2フェーズ：ドメイン分離
+
+1. 中核となるビジネスロジックを抽出する
+2. インフラストラクチャ関連の処理を分離する
+3. 表示層を独立させる
+4. 明確なインターフェースを定義する
+
+#### 第3フェーズ：責任の再配分
+
+1. 適切なクラスにメソッドを移動する
+2. 一貫性のあるモジュールに分割する
+3. 設計パターンを適用する
+4. 抽象化レイヤーを構築する
+
+### 出力形式
+
+```
+## 設計リファクタリング計画
+
+### 現行の課題
+1. **[アーキテクチャ上の問題]**: [該当箇所]
+   - **違反事項**: [破られている設計原則]
+   - **影響**: [負の影響内容]
+
+### 提案する構造
 ```mermaid
 classDiagram
-  [New class relationships]
+  [新しいクラス間関係]
 ```
 
-### Refactoring Steps
-1. **Step 1**: [Specific action]
-   - **Files to modify**: [List]
-   - **Risk level**: [Low/Medium/High]
+### リファクタリング手順
 
-2. **Step 2**: [Continue with steps...]
+1. **手順1**: [具体的な対応内容]
+   - **修正対象ファイル**: [一覧]
+   - **リスクレベル**: [低/中/高]
 
-### Benefits
-- **Maintainability**: [How it improves]
-- **Testability**: [Testing improvements]
-- **Flexibility**: [Future benefits]
+2. **手順2**: [引き続き手順を記載...]
+
+### 期待される効果
+
+- **保守性**: [どのように改善されるか]
+- **テスト容易性**: [テスト面での改善点]
+- **柔軟性**: [将来的なメリット]
+
 ```
 
-## Customization Guidelines
+## カスタマイズガイドライン
 
-### Template Variables
-- `{project_context}`: Specific project information
-- `{code_focus}`: Particular areas of concern
-- `{priority_level}`: Analysis depth required
-- `{framework}`: Relevant framework constraints
+### テンプレート変数
+- `{project_context}`: プロジェクト固有の情報
+- `{code_focus}`: 特に注意が必要な箇所
+- `{priority_level}`: 必要な分析の深さ
+- `{framework}`: 関連するフレームワークの制約条件
 
-### Context Adaptation
-- Adjust terminology based on domain
-- Modify focus areas based on project type
-- Scale recommendations based on team size
-- Consider existing architectural decisions
+### 文脈に応じた調整
+- ドメインに応じて用語を適宜変更
+- プロジェクト種別に応じて重点項目を調整
+- チーム規模に応じて推奨事項の規模を調整
+- 既存のアーキテクチャ上の決定事項を考慮
+
+## リファクタリング・プロンプト集
+
+### 汎用リファクタリング
+コードの可読性、保守性、パフォーマンスを向上させるためのプロンプトです。
+
+#### 1. 基本的な改善
+```markdown
+このコードをリファクタリングして、機能を変えずに可読性、保守性、パフォーマンスを向上させてください。
+1. 現在の実装の問題点を説明してください。
+2. 変更点とその理由をコメントで説明しながら、リファクタリング後のコードを提示してください。
+3. 最後に、このリファクタリングによるメリットを要約してください。
+
+[コードをここに貼り付け]
+```
+
+#### 2. 可読性と慣用的な記述（Pythonic等）
+
+```markdown
+以下の[言語]コードを、より[言語]らしい慣用的な書き方（Idiomatic）にリファクタリングし、可読性を高めてください。
+変数の命名規則やスタイルガイド（例: PEP 8）に準拠させてください。
+
+[コードをここに貼り付け]
+```
+
+### 特定の目的別リファクタリング
+
+#### 1. デザインパターンの適用
+
+```markdown
+以下のコードに[デザインパターン名]を適用してリファクタリングしてください。
+このコンテキストにおいて、なぜそのパターンが有効なのかも説明してください。
+
+[コードをここに貼り付け]
+```
+
+#### 2. 重複排除と複雑性低減
+
+```markdown
+この深くネストされたロジックを、機能を維持したまま、より小さな再利用可能な関数に分割してください。
+循環的複雑度を下げ、単一責任の原則に従うようにしてください。
+
+[コードをここに貼り付け]
+```
+
+#### 3. セキュリティと堅牢性
+
+```markdown
+このコードのエッジケース（境界値、空入力、異常系）を分析し、堅牢性を高めるための修正を行ってください。
+また、セキュリティ上の脆弱性（入力検証の不備など）があれば指摘し、修正案を提示してください。
+
+[コードをここに貼り付け]
+```
+
+## ドキュメント生成プロンプト
+
+### 包括的なドキュメント作成
+
+```markdown
+以下のコードについて、[言語/フレームワーク]のベストプラクティスに従った包括的なドキュメントを作成してください。
+以下の項目を含めてください：
+1. コードの概要（何をするものか）
+2. 関数/クラス/メソッドの詳細説明（引数、戻り値、型情報）
+3. 具体的な使用例（Usage Examples）
+4. 実装上の重要な注意点や制約事項
+5. 依存関係や前提条件
+
+[コードをここに貼り付け]
+```
+
+## AI Interaction & Response Rules
+
+### 1. Correction Handling (違う＝訂正)
+
+- **Mindset**: Treat "Different" (違う) not as rejection but as a "calm request for correction".
+- **Action**: Do not apologize excessively. Do not stop output. Correct the specific part calmly.
+- **Goal**: Maintain trust through "correction", not "apology".
+
+### 2. Interaction Boundaries (Masaru-Specific)
+
+- **No Romantic/Erotic Syntax**: Completely forbidden.
+- **Human Initiative**: User (Masaru) always leads. AI does not force conclusions.
+- **No Spiritual Terms**: "Soul", "Aura", "Chakra" etc. are forbidden (conceptual analysis allowed).
+- **Exclusive Use**: This interaction style is specific to Masaru.
+
+### 3. Reply Mode (返答モード)
+
+When requested, use the following mode:
+
+- **Header**: `(専門領域：xxx、専門知識：xxx、専門職：xxx)`
+- **Content**: Explain 100x more detailed than usual. Use logical deduction/Fermi estimation.
+- **Structure**:
+    1. Overall picture and assumptions (multifaceted view).
+    2. Step-by-step detailed explanation.
+    3. **Required Footer**:
+        - **Basis**: Facts supporting the answer.
+        - **Counter-evidence**: Facts/data denying the claim.
+        - **Counter-argument**: Flaws/contradictions in the answer.
+
+### 4. Writing Standards (文章基準)
+
+- **Style**: Literary style (文語調).
+- **Verbs**: Convert Sino-Japanese to native Japanese verbs where appropriate.
+- **Sentence**: One idea per sentence. Max 3 commas. 30-45 chars (max 60).
+- **Structure**: Conclusion first.
+- **Forbidden**: Redundant expressions ("〜ていく", "〜という"), passive voice, ambiguous words.
