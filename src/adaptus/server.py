@@ -24,20 +24,23 @@ def _read_code(path: Path) -> str:
 def _read_resource(resource_path: str, version: str = "latest") -> str:
     """リソースファイル読み込みの内部関数"""
     base_path = Path(__file__).parent / "resources"
-    
+
     # Handle versioned resources
     if version != "latest":
         versioned_path = base_path / "versions" / version / resource_path
         if versioned_path.exists():
             return versioned_path.read_text(encoding="utf-8")
-    
+
     # Default to latest version
     resource_file = base_path / resource_path
     if resource_file.exists():
         content = resource_file.read_text(encoding="utf-8")
         # Add version metadata
         if content and not content.startswith("# Version:"):
-            content = f"# Version: latest\n# Updated: {int(resource_file.stat().st_mtime)}\n\n{content}"
+            content = (
+                f"# Version: latest\n# Updated: "
+                f"{int(resource_file.stat().st_mtime)}\n\n{content}"
+            )
         return content
     return f"Resource not found: {resource_path} (version: {version})"
 
@@ -87,7 +90,7 @@ def _analyze_function(node: ast.AST) -> list[dict[str, any]]:
         if hasattr(node, "end_lineno")
         else 0
     )
-    
+
     if func_lines > 50:
         issues.append({
             "type": "long_function",
@@ -119,7 +122,7 @@ def _analyze_class(node: ast.AST) -> list[dict[str, any]]:
         n for n in node.body
         if isinstance(n, ast.FunctionDef)
     ]
-    
+
     if len(methods) > 20:
         issues.append({
             "type": "large_class",
@@ -176,34 +179,34 @@ def _read_template(template_path: str, variables: dict[str, str] = None) -> str:
     """テンプレートファイル読み込みと変数置換"""
     base_path = Path(__file__).parent / "templates"
     template_file = base_path / template_path
-    
+
     if not template_file.exists():
         return f"Template not found: {template_path}"
-    
+
     content = template_file.read_text(encoding="utf-8")
-    
+
     # Variable substitution
     if variables:
         for key, value in variables.items():
             content = content.replace(f"{{{key}}}", value)
-    
+
     return content
 
 
 def _validate_template(template_content: str) -> dict[str, any]:
     """テンプレートの妥当性検証"""
     issues = []
-    
+
     # Check for required sections
     required_sections = ["## Context", "## Analysis Framework", "## Output Format"]
     for section in required_sections:
         if section not in template_content:
             issues.append(f"Missing required section: {section}")
-    
+
     # Check for template variables
     import re
     variables = re.findall(r"\{([^}]+)\}", template_content)
-    
+
     return {
         "is_valid": len(issues) == 0,
         "issues": issues,
@@ -331,7 +334,7 @@ def analyze_debt(
             else {"loc": float(len(code.splitlines()))}
         )
         m["score"] = _score_formula(m)
-        
+
         # Add semantic analysis for Python
         if lang == "python" and include_semantic:
             semantic = _semantic_analysis(code)
@@ -341,7 +344,7 @@ def analyze_debt(
                 m["score"] = min(m["score"] + 1.0, 10.0)
             if semantic.get("summary", {}).get("total_smells", 0) > 0:
                 m["score"] = min(m["score"] + 0.5, 10.0)
-        
+
         results[p] = m
     return results
 
@@ -377,7 +380,7 @@ def generate_tests(
     target: str, framework: str = "pytest", test_type: str = "unit"
 ) -> dict[str, str]:
     """テスト雛形を生成し補完指示を付与"""
-    
+
     if framework == "pytest":
         if test_type == "integration":
             test_template = f'''#!/usr/bin/env python3
@@ -493,7 +496,7 @@ class Test{target.title()}:
 if __name__ == "__main__":
     pytest.main([__file__])
 '''
-    
+
     elif framework == "unittest":
         if test_type == "integration":
             test_template = f'''#!/usr/bin/env python3
@@ -585,7 +588,7 @@ class Test{target.title()}(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 '''
-    
+
     else:  # Custom framework or other
         test_template = f'''#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
@@ -632,24 +635,33 @@ class Test{target.title()}:
     }
 
     instructions = f"""
-    ## Test Implementation Instructions for {framework.upper()}
-    
-    1. **Import Statements**: Uncomment and update import statements for your target module
+    ## Test Implementation Instructions for {
+        framework.upper()
+    }
+
+    1. **Import Statements**: Uncomment and update import statements
+       for your target module
     2. **Test Cases**: Replace placeholder assertions with actual test logic
     3. **Fixtures**: Update setup_method/setUp with necessary test data
     4. **Edge Cases**: Add tests for boundary conditions and error scenarios
     5. **Mock Dependencies**: Use Mock/patch to isolate the unit under test
     6. **Assertions**: Ensure each test has clear, meaningful assertions
-    
-    ## Framework Features: {framework.upper()}
+
+    ## Framework Features: {
+        framework.upper()
+    }
     """
-    
+
     if framework in framework_specific_instructions:
-        for feature in framework_specific_instructions[framework]["features"]:
+        for feature in framework_specific_instructions[framework][
+        "features"
+    ]:
             instructions += f"- {feature}\n"
-        
+
         instructions += "\n### Commands:\n"
-        for cmd_name, cmd in framework_specific_instructions[framework]["commands"].items():
+        for cmd_name, cmd in framework_specific_instructions[framework][
+            "commands"
+        ].items():
             instructions += f"- {cmd_name}: `{cmd}`\n"
 
     return {
@@ -788,7 +800,10 @@ def propose_design(summary: str) -> dict[str, str]:
         "  UseCase --> DomainService\n"
         "  UseCase --> Repository\n"
     )
-    plan = "関心分離を徹底し、状態と手続を各ドメインへ再配置する。"
+    plan = (
+        "関心分離を徹底し、状態と手続を"
+        "各ドメインへ再配置する。"
+    )
     return {"mermaid": mermaid, "plan": plan, "note": summary}
 
 
