@@ -8,7 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
-      - run: uv run --with mcp python adaptus_server.py &
+      - run: uv run adaptus-server &
       - run: |
           python - <<'PY'
           import json,glob,requests
