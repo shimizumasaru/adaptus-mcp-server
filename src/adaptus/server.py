@@ -10,8 +10,9 @@ import ast
 import json
 import subprocess
 from pathlib import Path
+from typing import Any
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import FastMCP  # type: ignore
 
 mcp = FastMCP("Adaptus", json_response=True)
 
@@ -45,7 +46,7 @@ def _read_resource(resource_path: str, version: str = "latest") -> str:
     return f"Resource not found: {resource_path} (version: {version})"
 
 
-def _semantic_analysis(code: str) -> dict[str, any]:
+def _semantic_analysis(code: str) -> dict[str, Any]:
     """Pythonコードの意味解析を実行"""
     try:
         tree = ast.parse(code)
@@ -55,7 +56,7 @@ def _semantic_analysis(code: str) -> dict[str, any]:
     return _analyze_ast_nodes(tree)
 
 
-def _analyze_ast_nodes(tree: ast.AST) -> dict[str, any]:
+def _analyze_ast_nodes(tree: ast.AST) -> dict[str, Any]:
     """ASTノードを解析して問題を検出"""
     issues = []
     smells = []
@@ -74,94 +75,98 @@ def _analyze_ast_nodes(tree: ast.AST) -> dict[str, any]:
         "summary": {
             "total_issues": len(issues),
             "total_smells": len(smells),
-            "total_patterns": len(patterns)
-        }
+            "total_patterns": len(patterns),
+        },
     }
 
 
-def _analyze_function(node: ast.AST) -> list[dict[str, any]]:
+def _analyze_function(node: ast.AST) -> list[dict[str, Any]]:
     """関数ノードを解析"""
-    issues = []
+    issues: list[dict[str, Any]] = []
     if not isinstance(node, ast.FunctionDef):
         return issues
 
-    func_lines = (
-        node.end_lineno - node.lineno + 1
-        if hasattr(node, "end_lineno")
-        else 0
-    )
+    end_lineno = getattr(node, "end_lineno", None)
+    func_lines = (end_lineno - node.lineno + 1) if end_lineno is not None else 0
 
     if func_lines > 50:
-        issues.append({
-            "type": "long_function",
-            "name": node.name,
-            "line": node.lineno,
-            "length": func_lines,
-            "severity": "medium"
-        })
+        issues.append(
+            {
+                "type": "long_function",
+                "name": node.name,
+                "line": node.lineno,
+                "length": func_lines,
+                "severity": "medium",
+            }
+        )
 
     if len(node.args.args) > 7:
-        issues.append({
-            "type": "too_many_params",
-            "name": node.name,
-            "line": node.lineno,
-            "param_count": len(node.args.args),
-            "severity": "high"
-        })
+        issues.append(
+            {
+                "type": "too_many_params",
+                "name": node.name,
+                "line": node.lineno,
+                "param_count": len(node.args.args),
+                "severity": "high",
+            }
+        )
 
     return issues
 
 
-def _analyze_class(node: ast.AST) -> list[dict[str, any]]:
+def _analyze_class(node: ast.AST) -> list[dict[str, Any]]:
     """クラスノードを解析"""
-    issues = []
+    issues: list[dict[str, Any]] = []
     if not isinstance(node, ast.ClassDef):
         return issues
 
-    methods = [
-        n for n in node.body
-        if isinstance(n, ast.FunctionDef)
-    ]
+    methods = [n for n in node.body if isinstance(n, ast.FunctionDef)]
 
     if len(methods) > 20:
-        issues.append({
-            "type": "large_class",
-            "name": node.name,
-            "line": node.lineno,
-            "method_count": len(methods),
-            "severity": "medium"
-        })
+        issues.append(
+            {
+                "type": "large_class",
+                "name": node.name,
+                "line": node.lineno,
+                "method_count": len(methods),
+                "severity": "medium",
+            }
+        )
 
     return issues
 
 
-def _analyze_imports(node: ast.AST) -> list[dict[str, any]]:
+def _analyze_imports(node: ast.AST) -> list[dict[str, Any]]:
     """インポートノードを解析"""
     patterns = []
     if isinstance(node, ast.ImportFrom):
         if node.module and node.module.startswith("."):
-            patterns.append({
-                "type": "relative_import",
-                "line": node.lineno,
-                "module": node.module,
-                "note": "Consider absolute imports"
-            })
+            patterns.append(
+                {
+                    "type": "relative_import",
+                    "line": node.lineno,
+                    "module": node.module,
+                    "note": "Consider absolute imports",
+                }
+            )
     return patterns
 
 
-def _analyze_complexity(node: ast.AST) -> list[dict[str, any]]:
+def _analyze_complexity(node: ast.AST) -> list[dict[str, Any]]:
     """複雑さを解析"""
     smells = []
     if isinstance(node, ast.FunctionDef):
         nested_count = _count_nested_loops(node)
         if nested_count > 3:
-            smells.append({
-                "type": "deep_nesting",
-                "name": node.name,
-                "line": node.lineno,
-                "nesting_level": nested_count,
-                "severity": "high"
-            })
+            smells.append(
+                {
+                    "type": "deep_nesting",
+                    "name": node.name,
+                    "line": node.lineno,
+                    "nesting_level": nested_count,
+                    "severity": "high",
+                }
+            )
     return smells
 
 
@@ -175,7 +180,7 @@ def _count_nested_loops(node: ast.AST, depth: int = 0) -> int:
     return max_depth
 
 
-def _read_template(template_path: str, variables: dict[str, str] = None) -> str:
+def _read_template(template_path: str, variables: dict[str, str] | None = None) -> str:
     """テンプレートファイル読み込みと変数置換"""
     base_path = Path(__file__).parent / "templates"
     template_file = base_path / template_path
@@ -193,7 +198,7 @@ def _read_template(template_path: str, variables: dict[str, str] = None) -> str:
     return content
 
 
-def _validate_template(template_content: str) -> dict[str, any]:
+def _validate_template(template_content: str) -> dict[str, Any]:
     """テンプレートの妥当性検証"""
     issues = []
 
@@ -205,6 +210,7 @@ def _validate_template(template_content: str) -> dict[str, any]:
 
     # Check for template variables
     import re
+
     variables = re.findall(r"\{([^}]+)\}", template_content)
 
     return {
@@ -212,9 +218,7 @@ def _validate_template(template_content: str) -> dict[str, any]:
         "issues": issues,
         "variables": list(set(variables)),
         "length": len(template_content),
-        "sections": len(
-            re.findall(r"^#+", template_content, re.MULTILINE)
-        )
+        "sections": len(re.findall(r"^#+", template_content, re.MULTILINE)),
     }
 
 
@@ -319,21 +323,21 @@ def get_template_by_name(template_name: str) -> str:
 @mcp.tool()
 def analyze_debt(
     paths: list[str], lang: str = "python", include_semantic: bool = True
-) -> dict[str, dict[str, float]]:
+) -> dict[str, Any]:
     """負債候補の分析を行う"""
-    results: dict[str, dict[str, float]] = {}
+    results: dict[str, Any] = {}
     for p in paths:
         path = Path(p)
         if not path.exists():
             results[p] = {"error": 1.0}
             continue
         code = _read_code(path)
-        m = (
-            _basic_metrics(code)
+        m: dict[str, Any] = (
+            _basic_metrics(code)  # type: ignore
             if lang == "python"
             else {"loc": float(len(code.splitlines()))}
         )
-        m["score"] = _score_formula(m)
+        m["score"] = _score_formula(m)  # type: ignore
 
         # Add semantic analysis for Python
         if lang == "python" and include_semantic:
@@ -350,13 +354,11 @@ def analyze_debt(
 
 
 @mcp.tool()
-def score_debt(metrics: dict[str, float]) -> dict[str, float]:
+def score_debt(metrics: dict[str, float]) -> dict[str, Any]:
     """独自式でファイル別スコアを算出"""
     score = _score_formula(metrics)
     breakdown = {
-        "mi_normalized": min(
-            max((100.0 - metrics.get("mi", 0.0)) / 100.0, 0.0), 1.0
-        ),
+        "mi_normalized": min(max((100.0 - metrics.get("mi", 0.0)) / 100.0, 0.0), 1.0),
         "cc_normalized": min(
             max((metrics.get("branches", 0.0) - 10.0) / 40.0, 0.0), 1.0
         ),
@@ -367,18 +369,14 @@ def score_debt(metrics: dict[str, float]) -> dict[str, float]:
         "score": score,
         "breakdown": breakdown,
         "weights": {"mi": 0.35, "cc": 0.25, "dup": 0.20, "td": 0.20},
-        "severity": "low"
-        if score < 3.0
-        else "medium"
-        if score < 7.0
-        else "high",
+        "severity": "low" if score < 3.0 else "medium" if score < 7.0 else "high",
     }
 
 
 @mcp.tool()
 def generate_tests(
     target: str, framework: str = "pytest", test_type: str = "unit"
-) -> dict[str, str]:
+) -> dict[str, Any]:
     """テスト雛形を生成し補完指示を付与"""
 
     if framework == "pytest":
@@ -615,23 +613,23 @@ class Test{target.title()}:
     # Add more framework-specific tests here
 '''
 
-    framework_specific_instructions = {
+    framework_specific_instructions: dict[str, Any] = {
         "pytest": {
             "features": ["Parametrized testing", "Fixtures", "Markers", "Plugins"],
             "commands": {
                 "run": "pytest test_{target.lower()}.py",
                 "coverage": "pytest --cov={target} test_{target.lower()}.py",
-                "verbose": "pytest -v test_{target.lower()}.py"
-            }
+                "verbose": "pytest -v test_{target.lower()}.py",
+            },
         },
         "unittest": {
             "features": ["Built-in framework", "Test discovery", "Mock support"],
             "commands": {
                 "run": "python -m unittest test_{target.lower()}.py",
                 "discover": "python -m unittest discover",
-                "verbose": "python -m unittest -v test_{target.lower()}.py"
-            }
-        }
+                "verbose": "python -m unittest -v test_{target.lower()}.py",
+            },
+        },
     }
 
     instructions = f"""
@@ -653,9 +651,7 @@ class Test{target.title()}:
     """
 
     if framework in framework_specific_instructions:
-        for feature in framework_specific_instructions[framework][
-        "features"
-    ]:
+        for feature in framework_specific_instructions[framework]["features"]:
             instructions += f"- {feature}\n"
 
         instructions += "\n### Commands:\n"
@@ -684,7 +680,7 @@ class Test{target.title()}:
 
 
 @mcp.tool()
-def summarize(repo_path: str) -> dict[str, any]:
+def summarize(repo_path: str) -> dict[str, Any]:
     """ホットスポットと難所を集約"""
     repo = Path(repo_path)
     if not repo.exists():
@@ -697,8 +693,8 @@ def summarize(repo_path: str) -> dict[str, any]:
 
     # Analyze each file
     file_analysis = []
-    total_loc = 0
-    hotspots = []
+    total_loc = 0.0
+    hotspots: list[dict[str, Any]] = []
     complexity_issues = []
 
     for file_path in python_files:
@@ -708,40 +704,48 @@ def summarize(repo_path: str) -> dict[str, any]:
             metrics["score"] = _score_formula(metrics)
 
             relative_path = str(file_path.relative_to(repo))
-            file_analysis.append({
-                "path": relative_path,
-                "metrics": metrics,
-            })
+            file_analysis.append(
+                {
+                    "path": relative_path,
+                    "metrics": metrics,
+                }
+            )
 
             total_loc += metrics["loc"]
 
             # Identify hotspots (high complexity or large files)
             if metrics["score"] > 5.0 or metrics["loc"] > 200:
-                hotspots.append({
-                    "path": relative_path,
-                    "score": metrics["score"],
-                    "loc": metrics["loc"],
-                    "reason": (
-                        "High debt score"
-                        if metrics["score"] > 5.0
-                        else "Large file size"
-                    ),
-                })
+                hotspots.append(
+                    {
+                        "path": relative_path,
+                        "score": metrics["score"],
+                        "loc": metrics["loc"],
+                        "reason": (
+                            "High debt score"
+                            if metrics["score"] > 5.0
+                            else "Large file size"
+                        ),
+                    }
+                )
 
             # Identify complexity issues
             if metrics["branches"] > 20 or metrics["funcs"] > 15:
-                complexity_issues.append({
-                    "path": relative_path,
-                    "branches": metrics["branches"],
-                    "functions": metrics["funcs"],
-                    "avg_args": metrics["avg_args"],
-                })
+                complexity_issues.append(
+                    {
+                        "path": relative_path,
+                        "branches": metrics["branches"],
+                        "functions": metrics["funcs"],
+                        "avg_args": metrics["avg_args"],
+                    }
+                )
 
         except Exception as e:
-            file_analysis.append({
-                "path": str(file_path.relative_to(repo)),
-                "error": str(e),
-            })
+            file_analysis.append(
+                {
+                    "path": str(file_path.relative_to(repo)),
+                    "error": str(e),
+                }
+            )
 
     # Sort by debt score
     hotspots.sort(key=lambda x: x["score"], reverse=True)
@@ -757,9 +761,7 @@ def summarize(repo_path: str) -> dict[str, any]:
             f"Consider refactoring {len(complexity_issues)} files with high complexity"
         )
     if total_loc > 1000:
-        recommendations.append(
-            "Large codebase detected - consider modularization"
-        )
+        recommendations.append("Large codebase detected - consider modularization")
 
     return {
         "repository": repo_path,
@@ -779,7 +781,7 @@ def summarize(repo_path: str) -> dict[str, any]:
             "Analyze complexity issues for design improvements",
             "Consider breaking down large files into smaller modules",
             "Implement automated testing for high-risk areas",
-        ]
+        ],
     }
 
 
@@ -800,10 +802,7 @@ def propose_design(summary: str) -> dict[str, str]:
         "  UseCase --> DomainService\n"
         "  UseCase --> Repository\n"
     )
-    plan = (
-        "関心分離を徹底し、状態と手続を"
-        "各ドメインへ再配置する。"
-    )
+    plan = "関心分離を徹底し、状態と手続を" "各ドメインへ再配置する。"
     return {"mermaid": mermaid, "plan": plan, "note": summary}
 
 
